@@ -75,8 +75,10 @@ argv[8]: For the RR algorithm, define the time slice value, tslice, measured in 
 
 ## Authors
 
-- [Isaac Efrosman](https://github.com/IsaacEf)
+- [Logan Carter](https://github.com/logancarter2025)
 - [Anthony Basnight](https://github.com/anthony-basnight)
+- [Isaac Efrosman](https://github.com/IsaacEf)
+
 
 
 ## License
