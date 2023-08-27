@@ -9,7 +9,6 @@
 #include <iomanip>
 #include "Process.h"
 
-
 double next_exp(double& lambda, int& threshold) {
     double r = drand48();
     double x = -log(r)/lambda;
@@ -39,7 +38,7 @@ void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &out
     int next_arrival = 0;
 
     std::list<Process> running;
-    std::list<Process> waiting;
+    std::vector<Process> waiting;
     std::list<Process> ready;
     std::map<char, int> cpu_burst_index;
     std::map<char, int> io_burst_index;
@@ -64,7 +63,7 @@ void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &out
     while (processes.size() > terminated.size()) { //Remove process from processes once finished, not arrived
         // Figure out what happens next: arrival, finishing waiting state, or finishing running state
         end = clock();
-        if ((double)(end - start)/CLOCKS_PER_SEC > 0.25){
+        if (end - start > 100000){
             break;
         }
         // next_arrival is the index of the next process to arrive from processes
@@ -166,7 +165,7 @@ void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &out
                 }
                 io_burst_index[temp_process.getLabel()] += 1;
                 waiting.push_back(temp_process);
-                waiting.sort(fcfs_compare_wait);
+                std::sort(waiting.begin(), waiting.end(), fcfs_compare_wait);
                 time += (context_switch / 2);
             }
             
@@ -304,8 +303,8 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
 
     
     std::list<Process> running;
-    std::list<Process> waiting;
-    std::list<Process> ready;
+    std::vector<Process> waiting;
+    std::vector<Process> ready;
     
     //Maps process id ('A', 'B', ... 'Z') to how many cpu bursts have been completed
     std::map<char, int> cpu_burst_index;
@@ -338,7 +337,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
     while (processes.size() > terminated.size()) { //Remove process from processes once finished, not arrived
 
         end = clock();
-        if ((double)(end - start)/CLOCKS_PER_SEC > 0.25){
+        if (end - start > 100000){
             break;
         }
         
@@ -372,14 +371,14 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
             temp_process.setTimeStartedWaiting(time);                        
 
             ready.push_back(temp_process);
-            ready.sort(sjf_compare_tau);
+            std::sort(ready.begin(), ready.end(), sjf_compare_tau);
             next_arrival += 1;
 
             if (time < 10000) { 
                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " (tau " << (int)ceil(temp_process.getTau()) << "ms) arrived; added to ready queue [Q"; 
                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                 else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                    for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                         std::cout << " " << it->getLabel();
                     }
                     std::cout << "]" << std::endl;
@@ -401,7 +400,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " terminated [Q";
                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                 else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                    for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                         std::cout << " " << it->getLabel();
                     }
                     std::cout << "]" << std::endl;
@@ -416,7 +415,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
                             << temp_process.getCpuBursts().size() - cpu_burst_index[temp_process.getLabel()] << " bursts to go [Q";
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -434,7 +433,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
                               "ms ==> new tau " << (int)ceil(temp_process.getTau()) << "ms [Q"; 
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -450,7 +449,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
                             << time + temp_burst_len + (context_switch / 2) << "ms [Q";
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -466,7 +465,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
 
                 io_burst_index[temp_process.getLabel()] += 1;
                 waiting.push_back(temp_process);
-                waiting.sort(fcfs_compare_wait);
+                std::sort(waiting.begin(), waiting.end(), fcfs_compare_wait);
                 time += (context_switch / 2);
 
             }
@@ -474,20 +473,20 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
         } else {
             /* DONE WITH WAITING STATE */
             Process temp_process = waiting.front();
-            waiting.pop_front();
+            waiting.erase(waiting.begin());
 
             time = temp_process.getDoneWaiting();
             temp_process.setDoneWaiting(INT_MAX);
             temp_process.setTimeStartedWaiting(time);
             
             ready.push_back(temp_process);
-            ready.sort(sjf_compare_tau);
+            std::sort(ready.begin(), ready.end(), sjf_compare_tau);
 
             if (time < 10000) {
                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " (tau " << (int)ceil(temp_process.getTau()) << "ms) completed I/O; added to ready queue [Q";
                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                 else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                    for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                         std::cout << " " << it->getLabel();
                     }
                     std::cout << "]" << std::endl;
@@ -498,7 +497,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
         if (running.size() == 0 && ready.size() > 0) {
             /* MOVE NEXT PROCESS FROM READY STATE TO RUNNING STATE */
             Process temp_process = ready.front();
-            ready.pop_front();
+            ready.erase(ready.begin());
 
             if (temp_process.getCpuBound()) {
                 sumWaitTime_CPU += time - temp_process.getTimeStartedWaiting();
@@ -515,7 +514,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
                         << temp_burst_len << "ms burst [Q";
                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                 else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                    for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                         std::cout << " " << it->getLabel();
                     }
                     std::cout << "]" << std::endl;
@@ -603,8 +602,8 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
     int next_arrival = 0;
 
     std::list<Process> running;
-    std::list<Process> waiting;
-    std::list<Process> ready;
+    std::vector<Process> waiting;
+    std::vector<Process> ready;
     
     //Maps process id ('A', 'B', ... 'Z') to how many cpu bursts have been completed
     std::map<char, int> cpu_burst_index;
@@ -639,7 +638,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
     unsigned int counter = 0;
     while (processes.size() > counter) { //Remove process from processes once finished, not arrived
         end = clock();
-        if ((double)(end - start)/CLOCKS_PER_SEC > 0.25){
+        if (end - start > 100000){
             break;
         }
         
@@ -679,14 +678,14 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
 
             temp_process.setTimeStartedWaiting(time);
             ready.push_back(temp_process);
-            ready.sort(srt_compare_time_remaining);
+            std::sort(ready.begin(), ready.end(), srt_compare_time_remaining);
             next_arrival += 1;
 
             if (time < 10000) { 
                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " (tau " << (int)ceil(temp_process.getTau()) << "ms) arrived; added to ready queue [Q"; 
                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                 else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                    for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                         std::cout << " " << it->getLabel();
                     }
                     std::cout << "]" << std::endl;
@@ -708,7 +707,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " terminated [Q";
                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                 else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                    for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                         std::cout << " " << it->getLabel();
                     }
                     std::cout << "]" << std::endl;
@@ -724,7 +723,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else 
                     {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -746,7 +745,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                               "ms ==> new tau " << (int)ceil(temp_process.getTau()) << "ms [Q"; 
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -761,7 +760,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                             << time + temp_burst_len + (context_switch / 2) << "ms [Q";
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -769,7 +768,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                 }
                 io_burst_index[temp_process.getLabel()] += 1;
                 waiting.push_back(temp_process);
-                waiting.sort(fcfs_compare_wait);
+                std::sort(waiting.begin(), waiting.end(), fcfs_compare_wait);
                 time += (context_switch / 2);
             }
         } else if (done_blocking_time != INT_MAX) {
@@ -792,7 +791,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
 
             /* take the process that is exiting the waiting queue and store it in temp_process */
             Process temp_process = waiting.front();
-            waiting.pop_front();
+            waiting.erase(waiting.begin());
 
             /* update the time to when the new process leaves the waiting queue */
             time = temp_process.getDoneWaiting();
@@ -803,13 +802,13 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
             if (running.size() == 0) {
                 /* if nothing is in the running queue, add the process to the ready queue and sort it */
                 ready.push_back(temp_process);
-                ready.sort(srt_compare_time_remaining);
+                std::sort(ready.begin(), ready.end(), srt_compare_time_remaining);
                 
                 if (time < 10000) {
                     std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " (tau " << (int)ceil(temp_process.getTau()) << "ms) completed I/O; added to ready queue [Q";
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -823,6 +822,8 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                 /* update the time ran for the preempted_process */
                 preempted_process.updateTimeRan(time - preempted_process.getTimeStarted());
 
+
+                
                 if (preempted_process.getTau() - preempted_process.getTimeRan() > temp_process.getTau() - temp_process.getTimeRan()) {
                     /* preempt the current process in the running queue and replace it with the new process */
                     temp_process.setTimeStarted(time);
@@ -830,25 +831,25 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                     timeCpuRunning += time - preempted_process.getTimeStarted();
 
                     ready.push_back(temp_process);
-                    ready.sort(srt_compare_time_remaining);
+                    std::sort(ready.begin(), ready.end(), srt_compare_time_remaining);
 
                     if (time < 10000) {
                         std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " (tau " << (int)ceil(temp_process.getTau()) << "ms) completed I/O; preempting " << preempted_process.getLabel() << " [Q";
                         if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                         else {
-                            for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                            for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                                 std::cout << " " << it->getLabel();
                             }
                             std::cout << "]" << std::endl;
                         }
                     }
                     
-                    running.pop_front();
+                    running.erase(running.begin());
                     
                     temp_process.setTimeStarted(time);
                     preempted_process.setTimeStartedWaiting(time);
                     ready.push_back(preempted_process);
-                    ready.sort(srt_compare_time_remaining);
+                    std::sort(ready.begin(), ready.end(), srt_compare_time_remaining);
                     cpu_burst_index[preempted_process.getLabel()] -= 1;
                     
                     if (preempted_process.getCpuBound()) {
@@ -863,13 +864,13 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                     /* no preemption necessary */
                     temp_process.setTimeStartedWaiting(time);
                     ready.push_back(temp_process);
-                    ready.sort(srt_compare_time_remaining);
+                    std::sort(ready.begin(), ready.end(), srt_compare_time_remaining);
 
                     if (time < 10000) {
                         std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " (tau " << (int)ceil(temp_process.getTau()) << "ms) completed I/O; added to ready queue [Q";
                         if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                         else {
-                            for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                            for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                                 std::cout << " " << it->getLabel();
                             }
                             std::cout << "]" << std::endl;
@@ -882,7 +883,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
         if (running.size() == 0 && ready.size() > 0) {
             /* MOVE NEXT PROCESS FROM READY STATE TO RUNNING STATE */
             Process temp_process = ready.front();
-            ready.pop_front();
+            ready.erase(ready.begin());
 
             /* fully completed last cpu burst */
             if (temp_process.getTimeRan() == 0) {
@@ -901,7 +902,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                             << temp_burst_len << "ms burst [Q";
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -931,7 +932,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                             << temp_burst_len - temp_process.getTimeRan() << "ms of " << temp_burst_len << "ms burst [Q";
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
-                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        for (std::vector<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
                             std::cout << " " << it->getLabel();
                         }
                         std::cout << "]" << std::endl;
@@ -1001,135 +1002,106 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
     output << "-- number of preemptions: " << num_preemptions_IO + num_preemptions_CPU << " (" << num_preemptions_CPU << "/" << num_preemptions_IO << ")\n\n";
 }
 
+void rr(std::vector<Process> processes, int context_switch, int time_slice, std::ofstream &output, clock_t start) {
 
-void rr(std::vector<Process> processes, int context_switch, int time_slice, std::ofstream &output) {
-    
-    /* FOR ANALYTICS */
-    int num_cpu_bursts = 0;
-    int num_io_bursts = 0;
-    int sum_cpu_time = 0;
-    int sum_io_time = 0;
+    int timeCpuRunning = 0; 
+    int sumCpuTime_CPU = 0;
+    int numCpuBursts_CPU = 0;
+    int sumCpuTime_IO = 0;
+    int numCpuBursts_IO = 0;
     int sumWaitTime_CPU = 0;
     int sumWaitTime_IO = 0;
+    int num_preemptions_CPU = 0;
+    int num_preemptions_IO = 0;
+    clock_t end;
 
     int time = 0;
     std::cout << "time " << time << "ms: Simulator started for RR [Q <empty>]" << std::endl;
 
     std::sort(processes.begin(), processes.end(), fcfs_compare_arr);
-    
-    /* initialize three queues: running is for processes actively doing a CPU burst, waiting is for
-       processes actively blocking on IO (doing an IO burst), and ready is for processes in line to 
-       do a CPU burst */
-    std::list<Process> running;
-    std::list<Process> waiting;
-    std::list<Process> ready;
-    unsigned int num_terminated = 0;
-    unsigned int next_arrival = 0;
+    int next_arrival = 0;
     int magic_number = 1;
 
-    /* initialize two maps that keep track of the respective indices each Process is on */
+    std::list<Process> running;
+    std::vector<Process> waiting;
+    std::list<Process> ready;
     std::map<char, int> cpu_burst_index;
     std::map<char, int> io_burst_index;
+    std::vector<Process> terminated;
+    
 
-    /* set initial cpu burst and io burst indices to 0 and calculate the total cpu time and number of bursts */
     for (unsigned int i = 0; i < processes.size(); i++) {
         cpu_burst_index[processes[i].getLabel()] = 0;
         io_burst_index[processes[i].getLabel()] = 0;
-        if (processes[i].getCpuBound()) {
-            for (unsigned int j = 0; j < processes[i].getCpuBursts().size(); j++) {
-                sum_cpu_time += processes[i].getCpuBursts()[j];
-            }
-            num_cpu_bursts += processes[i].getCpuBursts().size();
+
+        std::vector<int> temp_cpu_bursts = processes[i].getCpuBursts();
+        std::vector<int> temp_io_bursts = processes[i].getIoBursts();
+        
+        if (processes[i].getCpuBound()) { 
+            for (unsigned int j = 0; j < temp_cpu_bursts.size(); j++) { sumCpuTime_CPU += temp_cpu_bursts[j]; }
+            numCpuBursts_CPU += temp_cpu_bursts.size();
         } else {
-            for (unsigned int j = 0; j < processes[i].getIoBursts().size(); j++) {
-                sum_io_time += processes[i].getIoBursts()[j];
-            }
-            num_io_bursts += processes[i].getIoBursts().size();
+            for (unsigned int j = 0; j < temp_cpu_bursts.size(); j++) { sumCpuTime_IO += temp_cpu_bursts[j]; }
+            numCpuBursts_IO += temp_cpu_bursts.size();
         }
     }
 
-    /* calculate which event occurs next: 
-         1. CPU burst completion/time_slice expiring            (running -> waiting/terminated++)
-         2. process starts using the CPU    (ready -> running)
-         3. I/O burst completion            (waiting -> ready)
-         4. New arrival                     (add process to ready) */
+    int temp_total_cpu_time = sumCpuTime_CPU;
+    int temp_total_cpu_time_io = sumCpuTime_IO;
 
-    while (processes.size() > num_terminated) {
-        bool ts_expired = false;
-        int cpu_burst_completion = INT_MAX;
-        if (running.size() > 0) {
-            Process running_process = running.front();
-            int burst_completion = running_process.getCpuBurst(cpu_burst_index[running_process.getLabel()]) + running_process.getTimeStarted();
-            int time_slice_expire = running_process.getTimeStarted() + (magic_number * time_slice);
-            cpu_burst_completion = std::min(burst_completion, time_slice_expire);
-            if (cpu_burst_completion == time_slice_expire) { ts_expired = true; }
-        }
-
-        int cpu_burst_starts = INT_MAX;
-        if (running.size() == 0 && ready.size() > 0) { 
-            cpu_burst_starts = time + (context_switch / 2); 
+    while (processes.size() > terminated.size()) {
+        end = clock();
+        if (end - start > 100000){
+            break;
         }
         
-        int io_burst_completion = INT_MAX;
-        if (waiting.size() > 0) {
-            Process waiting_process = waiting.front();
-            io_burst_completion = waiting_process.getIOBurst(io_burst_index[waiting_process.getLabel()]) + time;
-        }
-        
+         //Remove process from processes once finished, not arrived
+        // Figure out what happens next: arrival, finishing waiting state, or finishing running state
+
+        // next_arrival is the index of the next process to arrive from processes
+
+        /* the time when the next process arrives */
         int next_arrival_time = INT_MAX;
-        if (next_arrival < processes.size()){
+        if ((unsigned int)next_arrival < processes.size()) {
             next_arrival_time = processes[next_arrival].getArrivalTime();
         }
 
+        /* the time when the burst using the CPU finishes and is ready to leave the running queue */
+        int done_running_time = INT_MAX;
+        if (running.size() > 0) {
+            done_running_time = running.front().getDoneRunning();
+        }
+
+        /* the time when the burst blocking on IO finishes and is ready to leave the waiting queue */
+        int done_blocking_time = INT_MAX;
+        if (waiting.size() > 0) {
+            done_blocking_time = waiting.front().getDoneWaiting();
+        }
+        
+        int next_time_slice = INT_MAX;
+        if (running.size() > 0) {
+            Process preempted_process = running.front();
+            next_time_slice = (magic_number * time_slice) + preempted_process.getTimeStarted();
+        }
+
         
         
-        if (cpu_burst_completion <= cpu_burst_starts && cpu_burst_completion <= io_burst_completion && cpu_burst_completion <= next_arrival_time) {
-            /* CPU BURST COMPLETION */
-            
-            time = cpu_burst_completion;
-            if (ts_expired) {
-                /* TIME SLICE EXPIRED */
+
+        if (next_time_slice < next_arrival_time && next_time_slice < done_running_time && next_time_slice < done_blocking_time) {
+            /* TIME SLICE EXPIRED */
+
+            if (ready.size() > 0) {
+                /* preempt the current running process and send it to the back of the ready queue */
                 Process preempted_process = running.front();
-                preempted_process.updateTimeRan(time_slice);
-
-                if (ready.size() > 0) {
-                    /* PREEMPTION OCCURS */
-                    running.pop_front();
-
-                    int temp_burst_len = preempted_process.getCpuBurst(cpu_burst_index[preempted_process.getLabel()]);
-                    if (time < 10000) {
-                        std::cout << "time " << time << "ms: Time slice expired; preempting process " << preempted_process.getLabel() << " with " << temp_burst_len - preempted_process.getTimeRan() << "ms remaining [Q"; 
-                        if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-                        else {
-                            for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-                                std::cout << " " << it->getLabel();
-                            }
-                            std::cout << "]" << std::endl;
-                        }
-                    }
-
-                    time += (context_switch / 2);     
-
-                } else {
-                    //Nothing in ready queue
-                    std::cout << "  process: " << preempted_process.getLabel() << ", time ran: " << preempted_process.getTimeRan() << ", est len: " << preempted_process.getCpuBurst(cpu_burst_index[preempted_process.getLabel()]) << std::endl;
-                    magic_number++;
-                    if (time < 10000) {
-                        std::cout << "time " << time << "ms: Time slice expired; no preemption because ready queue is empty [Q <empty>]" << std::endl;
-                    }
-                    
-                }
-
-            } else {
-                /* CPU BURST COMPLETED */
-                Process finished_process = running.front();
-                running.pop_front();
-                finished_process.updateTimeRan(-1 * finished_process.getTimeRan());
+                preempted_process.updateTimeRan(magic_number * time_slice);
+                running.erase(running.begin());
                 
-                cpu_burst_index[finished_process.getLabel()]++;
-                if (cpu_burst_index[finished_process.getLabel()] == finished_process.getCpuBursts().size()) {
-                    /* PROCESS TERMINATED */
-                    std::cout << "time " << time << "ms: Process " << finished_process.getLabel() << " terminated [Q";
+                int temp_burst_len = preempted_process.getCpuBurst(cpu_burst_index[preempted_process.getLabel()] - 1);
+                time = preempted_process.getTimeStarted() + (magic_number * time_slice);
+                timeCpuRunning += time - preempted_process.getTimeStarted();
+                                    
+                if (time < 10000) {
+                    std::cout << "time " << time << "ms: Time slice expired; preempting process " << preempted_process.getLabel() << " with " << temp_burst_len - preempted_process.getTimeRan() << "ms remaining [Q"; 
                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
                     else {
                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
@@ -1137,35 +1109,136 @@ void rr(std::vector<Process> processes, int context_switch, int time_slice, std:
                         }
                         std::cout << "]" << std::endl;
                     }
-
-                    num_terminated++;
-
+                }
+                
+                time += (context_switch / 2);
+                preempted_process.setTimeStartedWaiting(time);
+                cpu_burst_index[preempted_process.getLabel()] -= 1;
+                ready.push_back(preempted_process);
+                magic_number = 1;
+                
+                if (preempted_process.getCpuBound()) {
+                    num_preemptions_CPU++;
                 } else {
-                    /* PROCESS GETS ADDED TO WAITING QUEUE */
-                    int io_burst_len = io_burst_index[finished_process.getLabel()];
-                    finished_process.setTimeStartedWaiting(time + io_burst_len + (context_switch / 2));
-                    waiting.push_back(finished_process);
-                    waiting.sort(fcfs_compare_wait);
-                    if (time < 10000) {
-                        std::cout << "time " << time << "ms: Process " << finished_process.getLabel()
-                            << " switching out of CPU; blocking on I/O until time "
-                            << time + io_burst_len + (context_switch / 2) << "ms [Q";
-                        if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-                        else {
-                            for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-                                std::cout << " " << it->getLabel();
-                            }
-                            std::cout << "]" << std::endl;
+                    num_preemptions_IO++;
+                }
+
+            } else {
+                time += time_slice;
+                Process running_process = running.front();
+                running_process.updateTimeRan(time_slice);
+                magic_number++;
+                
+                if (time < 10000) {
+                    std::cout << "time " << time << "ms: Time slice expired; no preemption because ready queue is empty [Q <empty>]" << std::endl;
+                }
+            }
+
+        } else if (next_arrival_time <= done_running_time && next_arrival_time <= done_blocking_time && next_arrival_time != INT_MAX) {
+            /* NEW ARRIVAL */
+            Process temp_process = processes[next_arrival];
+            time = temp_process.getArrivalTime();
+            temp_process.setTimeStartedWaiting(time);
+            ready.push_back(temp_process);
+            next_arrival += 1;
+            if (time < 10000) {
+                std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " arrived; added to ready queue [Q";
+                if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                else {
+                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        std::cout << " " << it->getLabel();
+                    }
+                    std::cout << "]" << std::endl;
+                }
+            }
+            
+        } else if (done_running_time < next_arrival_time && done_running_time <= done_blocking_time && running.size() > 0) {
+            /* DONE WITH RUNNING STATE */
+            Process temp_process = running.front();
+            running.pop_front();
+
+            time = temp_process.getDoneRunning();
+            temp_process.setDoneRunning(INT_MAX);
+            temp_process.updateTimeRan(-1 * temp_process.getTimeRan());
+            timeCpuRunning += time - temp_process.getTimeStarted();
+            magic_number = 1;
+
+            if (temp_process.getCpuBursts().size() == (unsigned int)cpu_burst_index[temp_process.getLabel()]) {
+                /* PROCESS TERMINATED */
+                std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " terminated [Q";
+                if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                else {
+                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        std::cout << " " << it->getLabel();
+                    }
+                    std::cout << "]" << std::endl;
+                }
+                terminated.push_back(temp_process);
+
+                //MAKE SURE THIS BELONGS HERE
+                time += (context_switch / 2);
+
+            } else {
+
+                if (time < 10000) {
+                    std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " completed a CPU burst; "
+                            << temp_process.getCpuBursts().size() - cpu_burst_index[temp_process.getLabel()]
+                            << " bursts to go [Q";
+                    if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                    else {
+                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                            std::cout << " " << it->getLabel();
                         }
+                        std::cout << "]" << std::endl;   
                     }
                 }
 
+
+                int temp_burst_len = temp_process.getIOBurst(io_burst_index[temp_process.getLabel()]);
+                temp_process.setDoneWaiting(time + temp_burst_len + (context_switch / 2));
+                
+                if (time < 10000) {
+                    std::cout << "time " << time << "ms: Process " << temp_process.getLabel()
+                          << " switching out of CPU; blocking on I/O until time "
+                          << time + temp_burst_len + (context_switch / 2) << "ms [Q";
+                    if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                    else {
+                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                            std::cout << " " << it->getLabel();
+                        }
+                        std::cout << "]" << std::endl;
+                    }
+                }
+                io_burst_index[temp_process.getLabel()] += 1;
+                waiting.push_back(temp_process);
+                std::sort(waiting.begin(), waiting.end(), fcfs_compare_wait);
                 time += (context_switch / 2);
             }
+        } else {
+            /* DONE WITH WAITING STATE */
+            Process temp_process = waiting.front();
+            waiting.erase(waiting.begin());
 
-        } else if (cpu_burst_starts <= io_burst_completion && cpu_burst_starts <= next_arrival_time) {
-            /*PROCESS STARTS USING CPU*/
-    
+            time = temp_process.getDoneWaiting();
+            temp_process.setDoneWaiting(INT_MAX);
+            temp_process.setTimeStartedWaiting(time);
+            ready.push_back(temp_process);
+
+            if (time < 10000) {
+                std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " completed I/O; added to ready queue [Q";
+                if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                else {
+                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                        std::cout << " " << it->getLabel();
+                    }
+                    std::cout << "]" << std::endl;
+                }
+            }
+            
+        }
+
+        if (running.size() == 0 && ready.size() > 0) {
+            /* MOVE NEXT PROCESS FROM READY STATE TO RUNNING STATE */
             Process temp_process = ready.front();
             ready.pop_front();
 
@@ -1174,474 +1247,123 @@ void rr(std::vector<Process> processes, int context_switch, int time_slice, std:
             } else {
                 sumWaitTime_IO += time - temp_process.getTimeStartedWaiting();
             }
-        
+
             time += (context_switch / 2);
 
-            int temp_burst_len = temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()]);
-            temp_process.setDoneRunning(time + temp_burst_len);
-            temp_process.setTimeStarted(time);
+            if (temp_process.getTimeRan() == 0) {
+                /* the process never got cut off */
             
-            if (time < 10000) {
-                std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " started using the CPU for "
-                        << temp_burst_len << "ms burst [Q";
-                if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-                else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-                        std::cout << " " << it->getLabel();
+                int temp_burst_len = temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()]);
+                temp_process.setDoneRunning(time + temp_burst_len);
+                temp_process.setTimeStarted(time);
+                if (time < 10000) {
+                    std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " started using the CPU for "
+                            << temp_burst_len << "ms burst [Q";
+                    if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                    else {
+                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                            std::cout << " " << it->getLabel();
+                        }
+                        std::cout << "]" << std::endl;
                     }
-                    std::cout << "]" << std::endl;
                 }
-            }
 
-            cpu_burst_index[temp_process.getLabel()] += 1;
-            running.push_back(temp_process);
-            magic_number = 1;
+                cpu_burst_index[temp_process.getLabel()] += 1;
+                
+                running.push_back(temp_process);
 
+            } else {
+                /* finish the cpu burst that already started */
 
-        } else if (io_burst_completion <= cpu_burst_completion && io_burst_completion <= next_arrival_time) {
-            /*IO BURST COMPLETION*/
+                if (temp_process.getCpuBound()) {
+                    temp_total_cpu_time += context_switch;
+                } else {
+                    temp_total_cpu_time_io += context_switch;
+                }
 
-            Process temp_process = waiting.front();
-            waiting.pop_front();
-
-            time = temp_process.getDoneWaiting();
-            temp_process.setDoneWaiting(INT_MAX);
-            temp_process.setTimeStartedWaiting(time);
-            
-            ready.push_back(temp_process);
-
-            if (time < 10000) {
-                std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << "  completed I/O; added to ready queue [Q";
-                if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-                else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-                        std::cout << " " << it->getLabel();
+                int temp_burst_len = temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()]);
+                temp_process.setDoneRunning(time + temp_burst_len - temp_process.getTimeRan());
+                temp_process.setTimeStarted(time);
+                if (time < 10000) {
+                    std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " started using the CPU for remaining "
+                            << temp_burst_len - temp_process.getTimeRan() << "ms of " << temp_burst_len << "ms burst [Q";
+                    if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
+                    else {
+                        for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
+                            std::cout << " " << it->getLabel();
+                        }
+                        std::cout << "]" << std::endl;
                     }
-                    std::cout << "]" << std::endl;
                 }
-            }
-            
-            io_burst_index[temp_process.getLabel()]++;
-            
-        } else { 
-            /*NEW ARRIVAL*/
 
-            Process temp_process = processes[next_arrival];
-            
-            time = temp_process.getArrivalTime();
-            temp_process.setTimeStarted(time);
-            
-            temp_process.setTimeStartedWaiting(time);                        
-            ready.push_back(temp_process);
-
-            next_arrival++;
-            if (time < 10000){
-                std::cout << "time " << time << "ms: Process " << temp_process.getLabel()
-                      << " arrived; added to ready queue [Q";
-                if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-                else {
-                    for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-                        std::cout << " " << it->getLabel();
-                    }
-                    std::cout << "]" << std::endl;
-                }
+                cpu_burst_index[temp_process.getLabel()] += 1;
+                running.push_back(temp_process);
             }
-  
         }
-        
     }
-;
+
+    std::cout << "time " << time << "ms: Simulator ended for RR [Q <empty>]" << std::endl;
+
+    double cpu_utilization = 0;
+    if(time != 0){
+        cpu_utilization = ceil(1000 * ((double)timeCpuRunning / time) * 100) / 1000;
+    }
+    
+    double cpuBurstAvg_CPU = 0;
+    if(numCpuBursts_CPU != 0){
+        cpuBurstAvg_CPU = ceil(1000 * (double)sumCpuTime_CPU / numCpuBursts_CPU) / 1000;
+    }
+
+    double cpuBurstAvg_IO = 0;
+    if(numCpuBursts_IO != 0){
+        cpuBurstAvg_IO = ceil(1000 * (double)sumCpuTime_IO / numCpuBursts_IO) / 1000;
+    }
+
+    double cpuBurstAvg_SUM = 0;
+    if(numCpuBursts_CPU + numCpuBursts_IO != 0){
+        cpuBurstAvg_SUM = ceil(1000.0 * (double)(sumCpuTime_CPU + sumCpuTime_IO) / (numCpuBursts_CPU + numCpuBursts_IO)) / 1000;
+    }
+
+    double IOBurstAvg_CPU = 0;
+    if(numCpuBursts_CPU != 0){
+        IOBurstAvg_CPU = ceil(1000 * (double)sumWaitTime_CPU / numCpuBursts_CPU) / 1000;
+    }
+
+    double IOBurstAvg_IO = 0;
+    if(numCpuBursts_IO != 0){
+        IOBurstAvg_IO = ceil(1000 * (double)sumWaitTime_IO / numCpuBursts_IO) / 1000;
+    }
+
+    double IOBurstAvg_SUM = 0;
+    if(numCpuBursts_CPU + numCpuBursts_IO != 0){
+        IOBurstAvg_SUM = ceil(1000.0 * (double)(sumWaitTime_CPU + sumWaitTime_IO) / (numCpuBursts_CPU + numCpuBursts_IO)) / 1000;
+    }
+
+    double turnaround = 0;
+    if (numCpuBursts_CPU + numCpuBursts_IO != 0) {
+        turnaround = (double)(sumWaitTime_CPU + sumWaitTime_IO) / (numCpuBursts_CPU + numCpuBursts_IO) + (double)(temp_total_cpu_time + temp_total_cpu_time_io) / (numCpuBursts_CPU + numCpuBursts_IO) + context_switch;
+    }
+
+    double temp_avg_cpu = 0;
+    if (numCpuBursts_CPU != 0) {
+        temp_avg_cpu = ceil(1000 * (double)temp_total_cpu_time / numCpuBursts_CPU) / 1000;
+    }
+
+    double temp_avg_io = 0;
+    if (numCpuBursts_IO != 0) {
+        temp_avg_io = ceil(1000 * (double)temp_total_cpu_time_io / numCpuBursts_IO) / 1000;
+    }
+    
+    output << "Algorithm RR\n";
+    output << "-- CPU utilization: " << std::fixed << std::setprecision(3) << cpu_utilization << "%\n";
+    output << "-- average CPU burst time: " << cpuBurstAvg_SUM << " ms (" << cpuBurstAvg_CPU << " ms/" << cpuBurstAvg_IO << " ms)\n";
+    output << "-- average wait time: " << IOBurstAvg_SUM << " ms (" << IOBurstAvg_CPU << " ms/" << IOBurstAvg_IO << " ms)\n";
+    output << "-- average turnaround time: " << ceil(1000 * turnaround) / 1000 << " ms (" << temp_avg_cpu + IOBurstAvg_CPU + context_switch 
+           << " ms/" << temp_avg_io + IOBurstAvg_IO + context_switch << " ms)\n";
+    output << "-- number of context switches: " << numCpuBursts_CPU + numCpuBursts_IO + num_preemptions_IO + num_preemptions_CPU << " (" << numCpuBursts_CPU + num_preemptions_CPU << "/" << numCpuBursts_IO + num_preemptions_IO << ")\n";
+    output << "-- number of preemptions: " << num_preemptions_IO + num_preemptions_CPU << " (" << num_preemptions_CPU << "/" << num_preemptions_IO << ")\n";
+
 }
-
-
-
-// void rr(std::vector<Process> processes, int context_switch, int time_slice, std::ofstream &output, clock_t start) {
-
-//     int timeCpuRunning = 0; 
-//     int sumCpuTime_CPU = 0;
-//     int numCpuBursts_CPU = 0;
-//     int sumCpuTime_IO = 0;
-//     int numCpuBursts_IO = 0;
-//     int sumWaitTime_CPU = 0;
-//     int sumWaitTime_IO = 0;
-//     int num_preemptions_CPU = 0;
-//     int num_preemptions_IO = 0;
-//     clock_t end;
-
-//     int time = 0;
-//     std::cout << "time " << time << "ms: Simulator started for RR [Q <empty>]" << std::endl;
-
-//     std::sort(processes.begin(), processes.end(), fcfs_compare_arr);
-//     int next_arrival = 0;
-//     int magic_number = 1;
-
-//     std::list<Process> running;
-//     std::list<Process> waiting;
-//     std::list<Process> ready;
-//     std::map<char, int> cpu_burst_index;
-//     std::map<char, int> io_burst_index;
-//     std::vector<Process> terminated;
-    
-
-//     for (unsigned int i = 0; i < processes.size(); i++) {
-//         cpu_burst_index[processes[i].getLabel()] = 0;
-//         io_burst_index[processes[i].getLabel()] = 0;
-
-//         std::vector<int> temp_cpu_bursts = processes[i].getCpuBursts();
-//         std::vector<int> temp_io_bursts = processes[i].getIoBursts();
-        
-//         if (processes[i].getCpuBound()) { 
-//             for (unsigned int j = 0; j < temp_cpu_bursts.size(); j++) { sumCpuTime_CPU += temp_cpu_bursts[j]; }
-//             numCpuBursts_CPU += temp_cpu_bursts.size();
-//         } else {
-//             for (unsigned int j = 0; j < temp_cpu_bursts.size(); j++) { sumCpuTime_IO += temp_cpu_bursts[j]; }
-//             numCpuBursts_IO += temp_cpu_bursts.size();
-//         }
-//     }
-
-//     int temp_total_cpu_time = sumCpuTime_CPU;
-//     int temp_total_cpu_time_io = sumCpuTime_IO;
-
-//     bool arrival_inside_cs = false;
-
-//     while (processes.size() > terminated.size()) {
-//         end = clock();
-//         if ((double)(end - start)/CLOCKS_PER_SEC > 0.25){
-//             break;
-//         }
-        
-//          //Remove process from processes once finished, not arrived
-//         // Figure out what happens next: arrival, finishing waiting state, or finishing running state
-
-//         // next_arrival is the index of the next process to arrive from processes
-
-//         /* the time when the next process arrives */
-//         int next_arrival_time = INT_MAX;
-//         if ((unsigned int)next_arrival < processes.size()) {
-//             next_arrival_time = processes[next_arrival].getArrivalTime();
-//         }
-
-//         /* the time when the burst using the CPU finishes and is ready to leave the running queue */
-//         int done_running_time = INT_MAX;
-//         if (running.size() > 0) {
-//             done_running_time = running.front().getDoneRunning();
-//         }
-
-//         /* the time when the burst blocking on IO finishes and is ready to leave the waiting queue */
-//         int done_blocking_time = INT_MAX;
-//         if (waiting.size() > 0) {
-//             done_blocking_time = waiting.front().getDoneWaiting();
-//         }
-        
-//         int next_time_slice = INT_MAX;
-//         if (running.size() > 0) {
-//             Process preempted_process = running.front();
-//             next_time_slice = (magic_number * time_slice) + preempted_process.getTimeStarted();
-//         }
-
-//         std::list<int> events;
-//         events.push_back(next_arrival_time);
-//         events.push_back(done_running_time);
-//         events.push_back(done_blocking_time);
-//         events.push_back(next_time_slice);
-
-//         int next_event = *std::min_element(events.begin(), events.end());
-//         // int next_event = std::min_element({next_arrival_time, done_running_time, done_blocking_time, next_time_slice});
-        
-//         if (next_event == next_arrival_time && next_arrival_time != INT_MAX) {
-//             // if (arrival_inside_cs) {
-//                 /* NEW ARRIVAL */
-//                 Process temp_process = processes[next_arrival];
-//                 time = temp_process.getArrivalTime();
-//                 temp_process.setTimeStartedWaiting(time);
-//                 ready.push_back(temp_process);
-//                 next_arrival += 1;
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " arrived; added to ready queue [Q";
-//                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                     else {
-//                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                             std::cout << " " << it->getLabel();
-//                         }
-//                         std::cout << "]" << std::endl;
-//                     }
-//                 }
-//             // }
-//         }
-
-//         if (running.size() == 0 && ready.size() > 0) {
-//             /* MOVE NEXT PROCESS FROM READY STATE TO RUNNING STATE */
-//             Process temp_process = ready.front();
-//             ready.pop_front();
-
-//             if (temp_process.getCpuBound()) {
-//                 sumWaitTime_CPU += time - temp_process.getTimeStartedWaiting();
-//             } else {
-//                 sumWaitTime_IO += time - temp_process.getTimeStartedWaiting();
-//             }
-
-//             time += (context_switch / 2);
-
-//             if (temp_process.getTimeRan() == 0) {
-//                 /* the process never got cut off */
-            
-//                 int temp_burst_len = temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()]);
-//                 temp_process.setDoneRunning(time + temp_burst_len);
-//                 temp_process.setTimeStarted(time);
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " started using the CPU for "
-//                             << temp_burst_len << "ms burst [Q";
-//                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                     else {
-//                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                             std::cout << " " << it->getLabel();
-//                         }
-//                         std::cout << "]" << std::endl;
-//                     }
-//                 }
-
-//                 cpu_burst_index[temp_process.getLabel()] += 1;
-                
-//                 running.push_back(temp_process);
-
-//             } else {
-//                 /* finish the cpu burst that already started */
-
-//                 if (temp_process.getCpuBound()) {
-//                     temp_total_cpu_time += context_switch;
-//                 } else {
-//                     temp_total_cpu_time_io += context_switch;
-//                 }
-
-//                 int temp_burst_len = temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()]);
-//                 temp_process.setDoneRunning(time + temp_burst_len - temp_process.getTimeRan());
-//                 temp_process.setTimeStarted(time);
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " started using the CPU for remaining "
-//                             << temp_burst_len - temp_process.getTimeRan() << "ms of " << temp_burst_len << "ms burst [Q";
-//                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                     else {
-//                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                             std::cout << " " << it->getLabel();
-//                         }
-//                         std::cout << "]" << std::endl;
-//                     }
-//                 }
-
-//                 cpu_burst_index[temp_process.getLabel()] += 1;
-//                 running.push_back(temp_process);
-//             }
-//         }
-
-//         if (next_event == done_running_time) {
-//             /* DONE WITH RUNNING STATE */
-//             Process temp_process = running.front();
-//             running.pop_front();
-
-//             time = temp_process.getDoneRunning();
-//             temp_process.setDoneRunning(INT_MAX);
-//             temp_process.updateTimeRan(-1 * temp_process.getTimeRan());
-//             timeCpuRunning += time - temp_process.getTimeStarted();
-//             magic_number = 1;
-
-//             if (temp_process.getCpuBursts().size() == (unsigned int)cpu_burst_index[temp_process.getLabel()]) {
-//                 /* PROCESS TERMINATED */
-//                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " terminated [Q";
-//                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                 else {
-//                     for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                         std::cout << " " << it->getLabel();
-//                     }
-//                     std::cout << "]" << std::endl;
-//                 }
-//                 terminated.push_back(temp_process);
-
-//                 //MAKE SURE THIS BELONGS HERE
-//                 time += (context_switch / 2);
-
-//             } else {
-
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " completed a CPU burst; "
-//                             << temp_process.getCpuBursts().size() - cpu_burst_index[temp_process.getLabel()]
-//                             << " bursts to go [Q";
-//                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                     else {
-//                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                             std::cout << " " << it->getLabel();
-//                         }
-//                         std::cout << "]" << std::endl;   
-//                     }
-//                 }
-
-
-//                 int temp_burst_len = temp_process.getIOBurst(io_burst_index[temp_process.getLabel()]);
-//                 temp_process.setDoneWaiting(time + temp_burst_len + (context_switch / 2));
-                
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Process " << temp_process.getLabel()
-//                           << " switching out of CPU; blocking on I/O until time "
-//                           << time + temp_burst_len + (context_switch / 2) << "ms [Q";
-//                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                     else {
-//                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                             std::cout << " " << it->getLabel();
-//                         }
-//                         std::cout << "]" << std::endl;
-//                     }
-//                 }
-//                 io_burst_index[temp_process.getLabel()] += 1;
-//                 waiting.push_back(temp_process);
-//                 waiting.sort(fcfs_compare_wait);
-//                 //std::sort(waiting.begin(), waiting.end(), fcfs_compare_wait);
-//                 time += (context_switch / 2);
-//             }
-//         }
-
-//         if (next_event == next_time_slice) {
-//             /* TIME SLICE EXPIRED */
-
-//             if (ready.size() > 0) {
-//                 /* preempt the current running process and send it to the back of the ready queue */
-//                 Process preempted_process = running.front();
-//                 preempted_process.updateTimeRan(magic_number * time_slice);
-//                 running.erase(running.begin());
-                
-//                 int temp_burst_len = preempted_process.getCpuBurst(cpu_burst_index[preempted_process.getLabel()] - 1);
-//                 time = preempted_process.getTimeStarted() + (magic_number * time_slice);
-//                 timeCpuRunning += time - preempted_process.getTimeStarted();
-                                    
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Time slice expired; preempting process " << preempted_process.getLabel() << " with " << temp_burst_len - preempted_process.getTimeRan() << "ms remaining [Q"; 
-//                     if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                     else {
-//                         for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                             std::cout << " " << it->getLabel();
-//                         }
-//                         std::cout << "]" << std::endl;
-//                     }
-//                 }
-                
-//                 time += (context_switch / 2);
-//                 preempted_process.setTimeStartedWaiting(time);
-//                 cpu_burst_index[preempted_process.getLabel()] -= 1;
-//                 ready.push_back(preempted_process);
-//                 magic_number = 1;
-                
-//                 if (preempted_process.getCpuBound()) {
-//                     num_preemptions_CPU++;
-//                 } else {
-//                     num_preemptions_IO++;
-//                 }
-
-//             } else {
-//                 time += time_slice;
-//                 Process running_process = running.front();
-//                 running_process.updateTimeRan(time_slice);
-//                 magic_number++;
-                
-//                 if (time < 10000) {
-//                     std::cout << "time " << time << "ms: Time slice expired; no preemption because ready queue is empty [Q <empty>]" << std::endl;
-//                 }
-//             }
-
-//         } 
-        
-//         if (next_event == done_blocking_time) {
-//             /* DONE WITH WAITING STATE */
-//             Process temp_process = waiting.front();
-//             waiting.pop_front();
-//             //waiting.erase(waiting.begin());
-
-//             time = temp_process.getDoneWaiting();
-//             temp_process.setDoneWaiting(INT_MAX);
-//             temp_process.setTimeStartedWaiting(time);
-//             ready.push_back(temp_process);
-
-//             if (time < 10000) {
-//                 std::cout << "time " << time << "ms: Process " << temp_process.getLabel() << " completed I/O; added to ready queue [Q";
-//                 if (ready.size() == 0) { std::cout << " <empty>]" << std::endl; }
-//                 else {
-//                     for (std::list<Process>::iterator it = ready.begin(); it != ready.end(); it++) {
-//                         std::cout << " " << it->getLabel();
-//                     }
-//                     std::cout << "]" << std::endl;
-//                 }
-//             }
-            
-//         }
-
-//         // if (time > 690 && time < 700) { std::cout << "  time: " << time << ", next_arrival in: " << time - next_arrival_time << ", context_switch: " << context_switch << std::endl; }
-        
-//         if (time + context_switch > next_arrival_time) { arrival_inside_cs = true; continue; }
-
-//         arrival_inside_cs = false;
-
-        
-//     }
-
-//     std::cout << "time " << time << "ms: Simulator ended for RR [Q <empty>]" << std::endl;
-
-//     double cpu_utilization = 0;
-//     if(time != 0){
-//         cpu_utilization = ceil(1000 * ((double)timeCpuRunning / time) * 100) / 1000;
-//     }
-    
-//     double cpuBurstAvg_CPU = 0;
-//     if(numCpuBursts_CPU != 0){
-//         cpuBurstAvg_CPU = ceil(1000 * (double)sumCpuTime_CPU / numCpuBursts_CPU) / 1000;
-//     }
-
-//     double cpuBurstAvg_IO = 0;
-//     if(numCpuBursts_IO != 0){
-//         cpuBurstAvg_IO = ceil(1000 * (double)sumCpuTime_IO / numCpuBursts_IO) / 1000;
-//     }
-
-//     double cpuBurstAvg_SUM = 0;
-//     if(numCpuBursts_CPU + numCpuBursts_IO != 0){
-//         cpuBurstAvg_SUM = ceil(1000.0 * (double)(sumCpuTime_CPU + sumCpuTime_IO) / (numCpuBursts_CPU + numCpuBursts_IO)) / 1000;
-//     }
-
-//     double IOBurstAvg_CPU = 0;
-//     if(numCpuBursts_CPU != 0){
-//         IOBurstAvg_CPU = ceil(1000 * (double)sumWaitTime_CPU / numCpuBursts_CPU) / 1000;
-//     }
-
-//     double IOBurstAvg_IO = 0;
-//     if(numCpuBursts_IO != 0){
-//         IOBurstAvg_IO = ceil(1000 * (double)sumWaitTime_IO / numCpuBursts_IO) / 1000;
-//     }
-
-//     double IOBurstAvg_SUM = 0;
-//     if(numCpuBursts_CPU + numCpuBursts_IO != 0){
-//         IOBurstAvg_SUM = ceil(1000.0 * (double)(sumWaitTime_CPU + sumWaitTime_IO) / (numCpuBursts_CPU + numCpuBursts_IO)) / 1000;
-//     }
-
-//     double turnaround = 0;
-//     if (numCpuBursts_CPU + numCpuBursts_IO != 0) {
-//         turnaround = (double)(sumWaitTime_CPU + sumWaitTime_IO) / (numCpuBursts_CPU + numCpuBursts_IO) + (double)(temp_total_cpu_time + temp_total_cpu_time_io) / (numCpuBursts_CPU + numCpuBursts_IO) + context_switch;
-//     }
-
-//     double temp_avg_cpu = 0;
-//     if (numCpuBursts_CPU != 0) {
-//         temp_avg_cpu = ceil(1000 * (double)temp_total_cpu_time / numCpuBursts_CPU) / 1000;
-//     }
-
-//     double temp_avg_io = 0;
-//     if (numCpuBursts_IO != 0) {
-//         temp_avg_io = ceil(1000 * (double)temp_total_cpu_time_io / numCpuBursts_IO) / 1000;
-//     }
-    
-//     output << "Algorithm RR\n";
-//     output << "-- CPU utilization: " << std::fixed << std::setprecision(3) << cpu_utilization << "%\n";
-//     output << "-- average CPU burst time: " << cpuBurstAvg_SUM << " ms (" << cpuBurstAvg_CPU << " ms/" << cpuBurstAvg_IO << " ms)\n";
-//     output << "-- average wait time: " << IOBurstAvg_SUM << " ms (" << IOBurstAvg_CPU << " ms/" << IOBurstAvg_IO << " ms)\n";
-//     output << "-- average turnaround time: " << ceil(1000 * turnaround) / 1000 << " ms (" << temp_avg_cpu + IOBurstAvg_CPU + context_switch 
-//            << " ms/" << temp_avg_io + IOBurstAvg_IO + context_switch << " ms)\n";
-//     output << "-- number of context switches: " << numCpuBursts_CPU + numCpuBursts_IO + num_preemptions_IO + num_preemptions_CPU << " (" << numCpuBursts_CPU + num_preemptions_CPU << "/" << numCpuBursts_IO + num_preemptions_IO << ")\n";
-//     output << "-- number of preemptions: " << num_preemptions_IO + num_preemptions_CPU << " (" << num_preemptions_CPU << "/" << num_preemptions_IO << ")\n";
-
-// }
 
 int main(int argc, char** argv) {
     if (argc != 9) {
@@ -1733,7 +1455,7 @@ int main(int argc, char** argv) {
     std::cout << std::endl;
     srt(processes, context_switch, lambda, alpha, output, start);
     std::cout << std::endl;
-    rr(processes, context_switch, time_slice, output);
+    rr(processes, context_switch, time_slice, output, start);
 
     output.close();
 
@@ -1741,10 +1463,6 @@ int main(int argc, char** argv) {
     //clock_t end;
     //end = clock();
     //std::cout << start << ", " << end << " diff = " << end - start << std::endl;
-
-    //clock_t final;
-    //final = clock();
-    //std::cout << (double)(final - start)/CLOCKS_PER_SEC << std::endl;
 
 
     return EXIT_SUCCESS;
