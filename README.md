@@ -32,8 +32,12 @@ queue is empty, if process G is preempted by a time slice expiration, do not con
 ```c++
 To compile:
 g++ -g main.cpp Process.cpp
-execute:
+
+execution (example):
 ./a.out 3 1 1024 0.001 3000 4 0.75 256
+
+See usage report:
+cat simout.txt
 
 argv[1]: Define n as the number of processes to simulate. Process IDs are assigned in
 alphabetical order A through Z. Therefore, you will have at most 26 processes to simulate.
