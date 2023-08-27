@@ -17,7 +17,7 @@ double next_exp(double& lambda, int& threshold) {
     return x;
 }
 
-void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &output, clock_t start) {
+void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &output) {
 
     //Variables used for analysis to output file
     int timeCpuRunning = 0;
@@ -57,14 +57,11 @@ void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &out
             numCpuBursts_IO += temp_cpu_bursts.size();
         }
     }
-    clock_t end;
+    
     
     while (processes.size() > terminated.size()) { //Remove process from processes once finished, not arrived
         // Figure out what happens next: arrival, finishing waiting state, or finishing running state
-        end = clock();
-        if (end - start > 100000){
-            break;
-        }
+        
         // next_arrival is the index of the next process to arrive from processes
 
         /* the time when the next process arrives */
@@ -280,7 +277,7 @@ void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &out
 
 }
 
-void sjf(std::vector<Process> processes, int context_switch, double lambda, double alpha, std::ofstream &output, clock_t start){
+void sjf(std::vector<Process> processes, int context_switch, double lambda, double alpha, std::ofstream &output){
     int time = 0;
     std::cout << "time " << time << "ms: Simulator started for SJF [Q <empty>]" << std::endl;
 
@@ -331,14 +328,9 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
         }
     }
 
-    clock_t end;
     while (processes.size() > terminated.size()) { //Remove process from processes once finished, not arrived
 
-        end = clock();
-        if (end - start > 100000){
-            break;
-        }
-        
+                
         // Figure out what happens next: arrival, finishing waiting state, or finishing running state
 
         // next_arrival is the index of the next process to arrive from processes
@@ -577,7 +569,7 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
 
 }
 
-void srt(std::vector<Process> processes, int context_switch, double lambda, double alpha, std::ofstream &output, clock_t start){
+void srt(std::vector<Process> processes, int context_switch, double lambda, double alpha, std::ofstream &output){
 
     int timeCpuRunning = 0; 
 
@@ -630,13 +622,10 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
 
     int temp_total_cpu_time = sumCpuTime_CPU;
     
-    clock_t end;
+    
     unsigned int counter = 0;
     while (processes.size() > counter) { //Remove process from processes once finished, not arrived
-        end = clock();
-        if (end - start > 100000){
-            break;
-        }
+        
         
 
 
@@ -984,7 +973,7 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
     output << "-- number of preemptions: " << num_preemptions_IO + num_preemptions_CPU << " (" << num_preemptions_CPU << "/" << num_preemptions_IO << ")\n\n";
 }
 
-void rr(std::vector<Process> processes, int context_switch, int time_slice, std::ofstream &output, clock_t start) {
+void rr(std::vector<Process> processes, int context_switch, int time_slice, std::ofstream &output) {
 
     int timeCpuRunning = 0; 
     int sumCpuTime_CPU = 0;
@@ -995,7 +984,7 @@ void rr(std::vector<Process> processes, int context_switch, int time_slice, std:
     int sumWaitTime_IO = 0;
     int num_preemptions_CPU = 0;
     int num_preemptions_IO = 0;
-    clock_t end;
+    
 
     int time = 0;
     std::cout << "time " << time << "ms: Simulator started for RR [Q <empty>]" << std::endl;
@@ -1032,10 +1021,7 @@ void rr(std::vector<Process> processes, int context_switch, int time_slice, std:
     int temp_total_cpu_time_io = sumCpuTime_IO;
 
     while (processes.size() > terminated.size()) {
-        end = clock();
-        if (end - start > 100000){
-            break;
-        }
+       
         
          //Remove process from processes once finished, not arrived
         // Figure out what happens next: arrival, finishing waiting state, or finishing running state
@@ -1421,13 +1407,13 @@ int main(int argc, char** argv) {
     output.open("simout.txt");
     
 
-    fcfs(processes, context_switch, output, start);
+    fcfs(processes, context_switch, output);
     std::cout << std::endl;
-    sjf(processes, context_switch, lambda, alpha, output, start);
+    sjf(processes, context_switch, lambda, alpha, output);
     std::cout << std::endl;
-    srt(processes, context_switch, lambda, alpha, output, start);
+    srt(processes, context_switch, lambda, alpha, output);
     std::cout << std::endl;
-    rr(processes, context_switch, time_slice, output, start);
+    rr(processes, context_switch, time_slice, output);
 
     output.close();
 
