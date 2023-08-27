@@ -59,8 +59,8 @@ be skipped.
 
 argv[6]: Define tcs as the time, in milliseconds, that it takes to perform a context switch. Specifically,
 the first half of the context switch time (i.e., tcs 2) is the time required to remove the given process
-from the CPU; the second half of the context switch time is the time required to bring the next process in
-to use the CPU. Therefore, expect tcs to be a positive even integer.
+from the CPU; the second half of the context switch time is the time required to bring the next process
+in to use the CPU. Therefore, expect tcs to be a positive even integer.
 
 argv[7]: For the SJF and SRT algorithms, since we cannot know the actual CPU burst times beforehand, we
 will rely on estimates determined via exponential averaging. As such, this command-line argument is the
