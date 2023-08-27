@@ -129,10 +129,6 @@ private:
     int num_bursts;
     std::vector<int> cpu_bursts;
     std::vector<int> io_bursts;
-    //double cpu_burst_time;
-    //double turnaround_time;
-    //double wait_time;
-    //double cpu_utilization;
     bool cpu_availability;
 
     int done_running;

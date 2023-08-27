@@ -1,6 +1,3 @@
-//
-// Created by Henry Basnight on 7/12/23.
-//
 #include "Process.h"
 #include <climits>
 
