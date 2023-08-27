@@ -5,7 +5,6 @@
 #include <math.h>
 #include <fstream>
 #include <algorithm>
-#include <time.h>
 #include <iomanip>
 #include "Process.h"
 
@@ -21,7 +20,7 @@ double next_exp(double& lambda, int& threshold) {
 void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &output, clock_t start) {
 
     //Variables used for analysis to output file
-    int timeCpuRunning = 0; //line 105
+    int timeCpuRunning = 0;
     int cpuCS = 0;
     int ioCS = 0;
     int sumCpuTime_CPU = 0;
@@ -232,7 +231,6 @@ void fcfs(std::vector<Process> processes, int context_switch, std::ofstream &out
             running.push_back(temp_process);
         }
     }
-    //time += (context_switch / 2);
     std::cout << "time " << time << "ms: Simulator ended for FCFS [Q <empty>]" << std::endl;
 
 
@@ -423,8 +421,6 @@ void sjf(std::vector<Process> processes, int context_switch, double lambda, doub
                 }
 
                 double old_tau = temp_process.getTau();
-                /* update tau for temp_process */
-                // cpu->tau = ceil( alpha * cpu->burst + ( 1.0 - alpha ) * cpu->tau );
                 
                 temp_process.setTau(ceil(alpha * temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()] - 1) + ( 1.0 - alpha ) * (int)old_tau));
 
@@ -731,13 +727,10 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
                 }
                 
                 double old_tau = temp_process.getTau();
-                /* update tau for temp_process */
-                // cpu->tau = ceil( alpha * cpu->burst + ( 1.0 - alpha ) * cpu->tau );
                 
                 temp_process.setTau(ceil(alpha * temp_process.getCpuBurst(cpu_burst_index[temp_process.getLabel()] - 1) + ( 1.0 - alpha ) * (int)old_tau));
-
-                //sets to zero
                 
+                //Setting time ran to zero
                 temp_process.updateTimeRan(-1 * temp_process.getTimeRan());
 
                 if (time < 10000) { 
@@ -775,17 +768,6 @@ void srt(std::vector<Process> processes, int context_switch, double lambda, doub
             /* DONE WITH WAITING STATE */
             /* PREEMPTING MAY OCCUR */
 
-            /* steps: 
-             *  
-             *  1: check if anything is in the running queue 
-             *    2: if so, check if the process leaving the waiting queue will finish its cpu burst first
-             *      3: if so, preempt the current process in the running queue and replace it with the new process
-             *         -- the tricky part here is updating the times correctly
-             *      4: if the new process will take longer than the currently running process, put the new one in the ready queue and sort
-             *  5: if nothing is in the running queue, add the process to the ready queue and sort it
-             *
-
-             */
                            
 
 
@@ -1175,7 +1157,6 @@ void rr(std::vector<Process> processes, int context_switch, int time_slice, std:
                 }
                 terminated.push_back(temp_process);
 
-                //MAKE SURE THIS BELONGS HERE
                 time += (context_switch / 2);
 
             } else {
@@ -1372,14 +1353,12 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    /* ==== command line args for part I ==== */
+   
     int n = atoi(*(argv + 1));
     int n_cpu = atoi(*(argv + 2));
     long seed = atol(*(argv + 3));
     double lambda = atof(*(argv + 4));
     int threshold = atoi(*(argv + 5));
-
-    /* ==== command line args for part II === */
     int context_switch = atoi(*(argv + 6));
     double alpha = atof(*(argv + 7));
     int time_slice = atoi(*(argv + 8));
@@ -1428,9 +1407,6 @@ int main(int argc, char** argv) {
                 int io_time = ceil(next_exp(lambda, threshold)) * 10;
                 if (n - i <= n_cpu) { io_time /= 8; } // CPU-bound process
                 io_bursts.push_back(io_time);
-            //    std::cout << "--> CPU burst " << cpu_time << "ms --> I/O burst " << io_time << "ms" << std::endl;
-            } else {
-            //    std::cout << "--> CPU burst " << cpu_time << "ms" << std::endl;
             }
         }
         processes.push_back(Process(char(65 + i), n - i <= n_cpu, arrival_time, num_bursts, cpu_bursts, io_bursts));
@@ -1443,10 +1419,6 @@ int main(int argc, char** argv) {
 
     std::ofstream output;
     output.open("simout.txt");
-
-    clock_t start;
-    start = clock();
-
     
 
     fcfs(processes, context_switch, output, start);
@@ -1458,11 +1430,6 @@ int main(int argc, char** argv) {
     rr(processes, context_switch, time_slice, output, start);
 
     output.close();
-
-
-    //clock_t end;
-    //end = clock();
-    //std::cout << start << ", " << end << " diff = " << end - start << std::endl;
 
 
     return EXIT_SUCCESS;
